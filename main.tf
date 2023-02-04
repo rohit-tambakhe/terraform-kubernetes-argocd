@@ -1,7 +1,7 @@
 terraform {
   required_providers {
     kind = {
-      source = "tehcyx/kind"
+      source  = "tehcyx/kind"
       version = "0.0.12"
     }
     kubectl = {
@@ -14,10 +14,10 @@ terraform {
 provider "kind" {}
 
 resource "kind_cluster" "default" {
-  name = "cluster-1"
+  name           = "cluster-1"
   wait_for_ready = true
   kind_config {
-    kind = "Cluster"
+    kind        = "Cluster"
     api_version = "kind.x-k8s.io/v1alpha4"
 
     node {
@@ -25,27 +25,27 @@ resource "kind_cluster" "default" {
     }
 
     node {
-      role = "worker"
+      role  = "worker"
       image = "kindest/node:v1.23.4"
     }
 
     node {
-      role = "worker"
+      role  = "worker"
       image = "kindest/node:v1.23.4"
     }
 
     node {
-      role = "worker"
+      role  = "worker"
       image = "kindest/node:v1.23.4"
     }
   }
 }
 
 provider "kubectl" {
-  host = "${kind_cluster.default.endpoint}"
-  cluster_ca_certificate = "${kind_cluster.default.cluster_ca_certificate}"
-  client_certificate = "${kind_cluster.default.client_certificate}"
-  client_key = "${kind_cluster.default.client_key}"
+  host                   = kind_cluster.default.endpoint
+  cluster_ca_certificate = kind_cluster.default.cluster_ca_certificate
+  client_certificate     = kind_cluster.default.client_certificate
+  client_key             = kind_cluster.default.client_key
 }
 
 data "kubectl_file_documents" "crds" {
@@ -53,9 +53,9 @@ data "kubectl_file_documents" "crds" {
 }
 
 resource "kubectl_manifest" "crds_apply" {
-  for_each  = data.kubectl_file_documents.crds.manifests
-  yaml_body = each.value
-  wait = true
+  for_each          = data.kubectl_file_documents.crds.manifests
+  yaml_body         = each.value
+  wait              = true
   server_side_apply = true
 }
 
@@ -65,21 +65,21 @@ data "kubectl_file_documents" "olm" {
 
 resource "kubectl_manifest" "olm_apply" {
   depends_on = [data.kubectl_file_documents.crds]
-  for_each  = data.kubectl_file_documents.olm.manifests
-  yaml_body = each.value
+  for_each   = data.kubectl_file_documents.olm.manifests
+  yaml_body  = each.value
 }
 
 provider "helm" {
   kubernetes {
-    host = "${kind_cluster.default.endpoint}"
-    cluster_ca_certificate = "${kind_cluster.default.cluster_ca_certificate}"
-    client_certificate = "${kind_cluster.default.client_certificate}"
-    client_key = "${kind_cluster.default.client_key}"
+    host                   = kind_cluster.default.endpoint
+    cluster_ca_certificate = kind_cluster.default.cluster_ca_certificate
+    client_certificate     = kind_cluster.default.client_certificate
+    client_key             = kind_cluster.default.client_key
   }
 }
 
 resource "helm_release" "argocd" {
-  name  = "argocd"
+  name = "argocd"
 
   repository       = "https://argoproj.github.io/argo-helm"
   chart            = "argo-cd"
